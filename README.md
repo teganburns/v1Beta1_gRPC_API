@@ -1,3 +1,7 @@
 # v1Beta1_gRPC_API
 
-I will clean this up at some point but I wanted to my inital commit up for now.
+1) You gon need to install protobuf and gRPC [https://github.com/grpc/grpc] https://grpc.io
+	If you are running glorious Arch Linux you can install gRPC (wich includes protobuf3) from AUR
+
+
+
