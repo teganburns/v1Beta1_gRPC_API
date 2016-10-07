@@ -38,5 +38,6 @@ Pro Tip: If you are running glorious Arch Linux you can install gRPC (wich inclu
 
 ### Notes:
  
- I have another repo [VisualAudio]() that uses SFML to Graphicaly display the audio input. I plan to include in my final Speech API project along with StreamingRequest. Go check it out it's 
+ I have another repo [VisualAudio](https://github.com/teganburns/Visual_Audio) that uses SFML to Graphicaly display the audio input. I plan to include in my final Speech API project along with 
+StreamingRequest. Go check it out it's 
 pretty neat!! :)
