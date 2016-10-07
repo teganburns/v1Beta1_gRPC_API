@@ -1,4 +1,5 @@
 # v1Beta1_gRPC_API
+[![Build Status](https://travis-ci.org/teganburns/v1Beta1_gRPC_API.svg?branch=master)](https://travis-ci.org/teganburns/v1Beta1_gRPC_API)
 
 C++ implmentations using Google's Speech (v1Beta1) API. Checkout Google's [Speech API](https://cloud.google.com/speech/)
 
