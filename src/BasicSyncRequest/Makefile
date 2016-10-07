@@ -1,6 +1,6 @@
 CXX = g++
 CPPFLAGS += -I/usr/local/include -pthread
-CXXFLAGS += -std=c++11
+CXXFLAGS += -std=c++14
 LDFLAGS += -L/usr/local/lib `pkg-config --libs grpc++`            \
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed \
            -lprotobuf -lpthread -ldl
@@ -39,7 +39,7 @@ main_cpp: cloud_speech.pb.o cloud_speech.grpc.pb.o main.o
 
 clean:
 	$(RM) $(CPP_TARGET)_cpp *.o *.pb.cc *.pb.h 
-
+	@echo make sure to remove the CONFIG file!!
 
 
 # The following is to test your system and ensure a smoother experience.

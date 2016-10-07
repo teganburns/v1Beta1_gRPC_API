@@ -6,12 +6,6 @@
 #include <fstream>
 #include <typeinfo>
 
-#include <SFML/Graphics.hpp>
-#include <SFML/Audio.hpp>
-#include <SFML/System.hpp>
-
-#include <sox.h>
-
 using namespace std;
 
 #include <grpc++/grpc++.h>
@@ -48,6 +42,8 @@ using google::cloud::speech::v1beta1::Speech;
 string line = "-----------------------------------------------------------------";
 string SCOPE = "speech.googleapis.com";
 
+
+// SET UP THE CONFIG FILE //
 RecognitionConfig Quick_Config(RecognitionConfig config){
 
 
@@ -135,16 +131,6 @@ int main(int argc, char* argv[])
     //system("clear");
 
 
-    // ATTEMPT TO LOAD AUDIO FILE //
-    sf::SoundBuffer audio_buffer;
-    if (!audio_buffer.loadFromFile(argv[1]))
-    {
-        cerr << "Coundn't load from audio file (FLAC)" << endl;
-        return -1;
-
-    }else {
-
-    }
 
     ifstream infile;
     infile.open(argv[1]);
@@ -152,38 +138,6 @@ int main(int argc, char* argv[])
     //cout << buf;
     infile.close();
 
-    // cout << "--Audio File Loaded--" << endl; 
-    // cout << "Audio File: " << argv[1] << endl;
-
-    // ofstream file("binary", ios::out | ios::in);
-    // file << buf << endl;
-    // file.close();
-
-
-    // PARSE SAMPLES FROM AUDIO BUFFER //
-
-    //const sf::Int16* samples = audio_buffer.getSamples();
-    // sf::Int16 pos = samples;
-    // std::string binary;
-    // for (unsigned int i = 0; i < audio_buffer.getSampleCount(); i++)
-    // {
-    //     binary += to_string(pos); //std::bitset<16>(pos).to_string();
-    //     pos = samples++;
-    // }
-
-    // WRITE PARSED SAMPLES TO FILE //
-    // fstream file("binary", ios::out | ios::in);
-    // file << samps << endl;
-    // file.close();
-
-    // DISPLAY AUDIO INFORMATION //
-    // cout << "Duration: " << audio_buffer.getDuration().asSeconds() << endl;
-    // cout << "Channel Count: " << audio_buffer.getChannelCount() << endl;
-    // cout << "Sample Rate: " << audio_buffer.getSampleRate() << endl;
-    // cout << "Sample Count: " << audio_buffer.getSampleCount() << endl;
-
-    // sleep(5);
-    // system("clear");
 
     //--------------------------//
     /// LOAD RECOGNITION AUDIO ///
@@ -204,14 +158,6 @@ int main(int argc, char* argv[])
     // sleep(5);
     system("clear");
 
-    // std::string n;
-    // sync_recognize_request.SerializeToString(&n);
-
-    // WRITE SerializeToString OUTPUT TO FILE //
-    // fstream ser_file("SerializeToString", ios::out | ios::in);
-    // ser_file << n << endl;
-    // ser_file.close();
-
 
     //---------------------------------//
     /// OPEN CHANNEL AND SEND REQUEST ///
@@ -219,7 +165,7 @@ int main(int argc, char* argv[])
 
     cout << "Attempting to send request to server" << endl;
 
-    // ALLOCATE MEMORY FOR RESPONSES //
+    // ALLOCATE MEMORY FOR RESPONSES (or something...)//
 
     grpc::ClientContext context;
     SyncRecognizeResponse response;
@@ -246,15 +192,9 @@ int main(int argc, char* argv[])
       cerr << "RPC failed" << endl;;
     }
 
-    // Prompt_Audio(sync_recognize_request);
-
     cout << "\nAll Finished!" << endl;
 
     google::protobuf::ShutdownProtobufLibrary();
 
     return 0;
 }
-
-//////////////////
-// SET UP OAUTH //
-//////////////////
