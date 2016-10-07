@@ -10,7 +10,8 @@ AudioSyncRequest and StreamingSyncRequest use SFML wich can be found here: [Main
 
 Pro Tip: If you are running glorious Arch Linux you can install gRPC (wich includes protobuf3) from AUR
 
-$ yaourt -S grpc
+	$ yaourt -S grpc
+
 
 
 
@@ -31,6 +32,8 @@ $ yaourt -S grpc
 [StreamingRequest](/src/StreamingRequest/):
 
  Currently not working, check out AudioSyncRequest for the closest thing to streaming
+
+
 
 
 ### Notes:
