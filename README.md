@@ -21,17 +21,19 @@ $ yaourt -S grpc
 
 [AudioSyncRequest](/src/AudioSyncRequest/):
 
-This requires that you have SFML 2.4.0 installed (see http://www.sfml-dev.org/download.php for details)
+ This requires that you have SFML 2.4.0 installed (see http://www.sfml-dev.org/download.php for details)
 
-Pro Tip: If you are running glorious Arch Linux you can download it from pacman
+ Pro Tip: If you are running glorious Arch Linux you can download it from pacman
 
-$ sudo pacman -S sfml
+	$ sudo pacman -S sfml
 
 
 [StreamingRequest](/src/StreamingRequest/):
 
-	Currently not working, check out AudioSyncRequest for the closest thing to streaming
+ Currently not working, check out AudioSyncRequest for the closest thing to streaming
 
 
-Notes: I have another repo [VisualAudio]() that uses SFML to Graphicaly display the audio input. I plan to include in my final Speech API project along with StreamingRequest. Go check it out it's pretty 
-neat!! :)
+### Notes:
+ 
+ I have another repo [VisualAudio]() that uses SFML to Graphicaly display the audio input. I plan to include in my final Speech API project along with StreamingRequest. Go check it out it's 
+pretty neat!! :)
