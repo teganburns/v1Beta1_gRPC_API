@@ -25,3 +25,5 @@ You gon need to install protobuf and gRPC [https://github.com/grpc/grpc] https:/
 	- Currently not working, check out AudioSyncRequest for the closest thing to streaming
 
 
+Notes: I have another repo [VisualAudio]() that uses SFML to Graphicaly display the audio input. I plan to include in my final Speech API project along with StreamingRequest. Go check it out it's pretty 
+neat!! :)
