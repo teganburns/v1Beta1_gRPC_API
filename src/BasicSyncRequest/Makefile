@@ -38,8 +38,8 @@ main_cpp: cloud_speech.pb.o cloud_speech.grpc.pb.o main.o
 	$(PROTO_PROTOC) -I $(PROTOS_PATH) --cpp_out=. cloud_speech.proto
 
 clean:
-	$(RM) $(CPP_TARGET)_cpp *.o *.pb.cc *.pb.h 
-	@echo make sure to remove the CONFIG file!!
+	$(RM) $(CPP_TARGET)_cpp *.o *.pb.cc *.pb.h
+
 
 
 # The following is to test your system and ensure a smoother experience.

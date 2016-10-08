@@ -1,10 +1,6 @@
 #include <iostream>
 #include <unistd.h>
-#include <numeric>
-#include <vector>
-#include <bitset>
 #include <fstream>
-#include <typeinfo>
 
 using namespace std;
 
@@ -26,11 +22,6 @@ using google::cloud::speech::v1beta1::StreamingRecognizeRequest;
 using google::cloud::speech::v1beta1::StreamingRecognizeResponse;
 using google::cloud::speech::v1beta1::SyncRecognizeRequest;
 using google::cloud::speech::v1beta1::SyncRecognizeResponse;
-//using google::cloud::speech::v1beta1::RecognitionConfig_AudioEncoding;
-
-// using grpc::Channel;
-// using grpc::ClientContext;
-// using grpc::Status;
 
 using grpc::CompletionQueue;
 using grpc::Channel;
@@ -43,10 +34,28 @@ string line = "-----------------------------------------------------------------
 string SCOPE = "speech.googleapis.com";
 
 
-// SET UP THE CONFIG FILE //
-RecognitionConfig Quick_Config(RecognitionConfig config){
+int main(int argc, char* argv[])
+{
+    system("clear");
+
+    GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+    // VERIFY  ARGS //
+     if (argc < 2) {
+    	cerr << "Usage:  " << argv[0] << " AUDIO_FILE[Required]" << endl;
+    	return -1;
+    }
 
 
+    //--------------//
+    /// SET UP SRR ///
+    //-------------//
+    SyncRecognizeRequest sync_recognize_request;
+    RecognitionConfig config;
+
+    sync_recognize_request.set_allocated_config(&config);
+
+    // CONFIG IS HERE //
     ::google::protobuf::int32 a = 16000;
     ::google::protobuf::int32 b = 1;
     google::cloud::speech::v1beta1::RecognitionConfig_AudioEncoding encoding = google::cloud::speech::v1beta1::RecognitionConfig_AudioEncoding::RecognitionConfig_AudioEncoding_FLAC;
@@ -56,107 +65,26 @@ RecognitionConfig Quick_Config(RecognitionConfig config){
     config.set_max_alternatives(b);
     config.set_profanity_filter(false);
 
- // cout << "\n--Quick config results--" << "\nEncoding: " << config.encoding() << "\nSample Rate: " << config.sample_rate() << "\nMax Alternatives: " << config.max_alternatives() << "\nSet Profanity Filter: " << config.profanity_filter() << endl;
-
-    return config;
-
-}
+    // DISPLAY RESULTS FOR DEBUGGING //
+    // cout << "\n--Quick config results--" << "\nEncoding: " << config.encoding() << "\nSample Rate: " << config.sample_rate() << "\nMax Alternatives: " << config.max_alternatives() << "\nSet Profanity Filter: " << config.profanity_filter() << endl;
 
 
 
-void Make_New_Config(char * CONFIG_FILE){
 
-    SyncRecognizeRequest sync_recognize_request;
-    RecognitionConfig config;
+    //--------------//
+    /// LOAD AUDIO ///
+    //-------------//
 
-    // cout << "SRR has_config() [should be false]: " << sync_recognize_request.has_config() << endl;
-    sync_recognize_request.set_allocated_config(&config);
-    // cout << "set_allocated_config done..." << "\nConfig Adress: " << &config << endl;
-    config = Quick_Config(config);
-    // cout << "Quick_Config done...\n" << endl;
-    // cout << "SRR has_config() [should be true]: " << sync_recognize_request.has_config() << endl;
-
-    // WRITE CONFIG TO CONFIG FILE //
-    fstream output(CONFIG_FILE, ios::out | ios::trunc | ios::binary);
-    if (!sync_recognize_request.SerializeToOstream(&output)) {
-        cerr << "Failed to write CONFIG_FILE." << endl;
-    }else{
-        cout << "Your CONFIG_FILE has been made. Please run this program again." << endl;
-    }
-
-    output.close();
-
-}
-
-
-int main(int argc, char* argv[])
-{
-    system("clear");
-
-    GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-    // VERIFY  ARGS //
-     if (argc < 2) {
-    	cerr << "Usage:  " << argv[0] << " AUDIO_FILE[Required]  CONFIG_FILE[Optional]" << endl;
-    	return -1;
-    }
-
-
-    SyncRecognizeRequest sync_recognize_request;
-    RecognitionConfig config;
-
-    // ATTEMPT TO LOAD CONFIG FILE //
-    bool make_new_config = false;
-    fstream input(argv[2], ios::in | ios::binary);
-    if (!input) {
-        cout << argv[2] << ": File not found.  Creating a new file." << endl;
-        make_new_config = true;
-    } else if (!sync_recognize_request.ParseFromIstream(&input)) {
-        cerr << "Failed to parse config file" << endl;
-        return -1;
-    } else {config = sync_recognize_request.config(); cout << "Config File Loaded" << endl;}
-    input.close();
-    // sleep(2);
-    system("clear");
-
-    // MAKE NEW CONFIG_FILE IF NECESSARY //
-    if (make_new_config){
-        Make_New_Config(argv[2]);
-        return 0;
-    }
-
-    // DISPLAY CONFIG_FILE RESULTS //
-    //cout << "\n--Config results--" << "\nEncoding: " << config.encoding() << "\nSample Rate: " << config.sample_rate() << "\nMax Alternatives: " << config.max_alternatives() << "\nSetProfanity Filter: " << config.profanity_filter() << endl;
-    //sleep(5);
-    //system("clear");
-
-
-
+    // LOAD AUDIO FILE DIRECTLY INTO STRING //
     ifstream infile;
     infile.open(argv[1]);
     string buf { istreambuf_iterator<char>(infile), istreambuf_iterator<char>() };
-    //cout << buf;
     infile.close();
 
-
-    //--------------------------//
-    /// LOAD RECOGNITION AUDIO ///
-    //--------------------------//
-
+    // SET AUDIO //
     RecognitionAudio audio;
-
-
     audio.set_content(buf);
-    cout << "sync_recognize_request.has_audio()";
-    if(sync_recognize_request.has_audio()){cout << " returned true" << endl;}else{cout << "returned false" << endl;}
-
     sync_recognize_request.set_allocated_audio(&audio);
-
-    cout << "sync_recognize_request.has_audio()";
-    if(sync_recognize_request.has_audio()){cout << " returned true" << endl;}else{cout << "returned false" << endl;}
-
-    // sleep(5);
-    system("clear");
 
 
     //---------------------------------//
@@ -172,7 +100,7 @@ int main(int argc, char* argv[])
 
     // Open Channel with Google's Server //
     auto creds = grpc::GoogleDefaultCredentials();
-    // Create a channel, stub and make RPC calls (same as in the previous example)
+    // Create a channel, stub and make RPC calls //
     auto channel = grpc::CreateChannel(SCOPE, creds);
     std::unique_ptr<Speech::Stub> stub(Speech::NewStub(channel));
     grpc::Status s = stub->SyncRecognize(&context, sync_recognize_request, &response);
