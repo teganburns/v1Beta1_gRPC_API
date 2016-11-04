@@ -47,7 +47,7 @@ using google::cloud::speech::v1beta1::Speech;
 
 string line = "-----------------------------------------------------------------";
 string SCOPE = "speech.googleapis.com";
-string AUDIO_FILE = "shitters.flac";
+string AUDIO_FILE = "audio_file.flac";
 
 
 
@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
 
     // SETUP CONFIG //
     ::google::protobuf::int32 a = 16000;
-    ::google::protobuf::int32 b = 1;
+    ::google::protobuf::int32 b = 5;
     google::cloud::speech::v1beta1::RecognitionConfig_AudioEncoding encoding = google::cloud::speech::v1beta1::RecognitionConfig_AudioEncoding::RecognitionConfig_AudioEncoding_FLAC;
 
     config.set_encoding(encoding);
@@ -134,14 +134,23 @@ int main(int argc, char* argv[])
 
     if (s.ok()) {
         cout << "Status returned OK\nResponse Size :" << response.results_size() << endl;
-        int a = 0;
-        SpeechRecognitionResult results = response.results(0);
-        SpeechRecognitionAlternative alternative = results.alternatives(a);
-        cout << "Response :" << alternative.transcript() << endl;
-    } else if (s.ok()){
-        cout << "Status Returned Canceled" << endl;
+        if (response.results_size() == 0) {cerr << "NO AUDIO RECOGNIZED" << endl; return 0;}
+
+        for ( int i=0; i<response.results_size(); i++)
+        {
+            SpeechRecognitionResult results = response.results(i);
+            cout << "alternatives size: " << results.alternatives_size() << endl;
+
+            for (int v=0; v<results.alternatives_size(); v++)
+            {
+                SpeechRecognitionAlternative alternative = results.alternatives(v);
+                cout << "Response :" << alternative.transcript() << endl;
+            }
+        }
+
+    } else if (!s.ok()){
+      cout << s.error_code() << ": " << s.error_message() << s.ok() << endl;
     }else {
-      // cout << s.error_code() << ": " << s.error_message() << s.ok() << endl;
       cerr << "RPC failed" << endl;;
     }
 
@@ -152,7 +161,3 @@ int main(int argc, char* argv[])
 
     return 0;
 }
-
-//////////////////
-// SET UP OAUTH //
-//////////////////

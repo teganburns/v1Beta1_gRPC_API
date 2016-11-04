@@ -1,12 +1,11 @@
 CXX = g++
-CPPFLAGS += -I/usr/local/include -pthread
-CXXFLAGS += -std=c++11
+CXXFLAGS += -std=c++11 -g
 LDFLAGS += -L/usr/local/lib `pkg-config --libs grpc++`            \
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed \
            -lprotobuf -lpthread -ldl
 
 LIBS=-lsfml-system -lsfml-window -lsfml-graphics -lsfml-network -lsfml-audio -lpthread
-INC=/home/owner/Documents/Development/git/SMFL/include
+INC=-I /home/owner/Documents/Development/git/SMFL/include -I /usr/include -I /usr/local/include
 
 PROTO_TARGET=cloud_speech
 PROTO_PROTOC=protoc
@@ -26,8 +25,8 @@ vpath %.proto $(PROTOS_PATH)
 
 all: system-check main_cpp
 
-main_cpp: cloud_speech.pb.o cloud_speech.grpc.pb.o main.o
-	$(CXX) $^ $(LDFLAGS) $(LIBS) -o $@
+main_cpp: cloud_speech.pb.o cloud_speech.grpc.pb.o  main.o
+	$(CXX) $(CXXFLAGS) $(INC) $^ $(LDFLAGS) $(LIBS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc
 %.grpc.pb.cc: %.proto
@@ -38,7 +37,7 @@ main_cpp: cloud_speech.pb.o cloud_speech.grpc.pb.o main.o
 	$(PROTO_PROTOC) -I $(PROTOS_PATH) --cpp_out=. cloud_speech.proto
 
 clean:
-	$(RM) $(CPP_TARGET)_cpp *.o *.pb.cc *.pb.h 
+	$(RM) $(CPP_TARGET)_cpp *.o *.pb.cc *.pb.h
 
 
 
