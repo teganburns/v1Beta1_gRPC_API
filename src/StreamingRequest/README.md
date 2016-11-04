@@ -8,7 +8,7 @@ This is still pretty messy and has no guarantee of working on your system!!
 
 
 ## Info
-This program does nothing spcific, it is simply meant as example for building other C++ programs baised off of Google's speech API.
+This program does nothing spcific, it is simply meant as example for building other C++ programs based off of Google's speech API.
 Please note that Google's speech API is still in Beta so this is likely to become void (until updated) in the future.
 
 ## Operation
