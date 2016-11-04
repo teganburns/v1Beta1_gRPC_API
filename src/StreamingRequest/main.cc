@@ -220,7 +220,8 @@ int main(int argc, char* argv[])
     // this is the card that my computer had, you will more than likely need to change this //
     const string Intel_Device = "HDA Intel PCH, 92HD91BXX Analog (CARD=PCH,DEV=0)";
     recorder.setDevice(Intel_Device);
-    if (!recorder.start(recorder.sample_rate)) {cerr << "Error starting recorder" << endl; return -1;}
+    // below the sample rate is doubled b/c I had trouble getting two signed 16bit ints into one string buffer. again a crude fix... //
+    if (!recorder.start(recorder.sample_rate * 2)) {cerr << "Error starting recorder" << endl; return -1;}
 
     cout << "SampleRate: " << recorder.getSampleRate() << "        Device: " << recorder.getDevice() << "        ChannelCount: " << recorder.getChannelCount() << endl;
 
