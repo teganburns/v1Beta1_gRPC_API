@@ -1,12 +1,12 @@
 CXX = g++
 CPPFLAGS += -I/usr/local/include -pthread
 CXXFLAGS += -std=c++14
-LDFLAGS += -L/usr/local/lib `pkg-config --libs grpc++`            \
+LDFLAGS += -L/usr/local/lib -lgrpc++ \
            -Wl,--no-as-needed -lgrpc++_reflection -Wl,--as-needed \
            -lprotobuf -lpthread -ldl
 
-LIBS=-lsfml-system -lsfml-window -lsfml-graphics -lsfml-network -lsfml-audio -lpthread
-INC=/home/owner/Documents/Development/git/SMFL/include
+#LIBS=-lsfml-system -lsfml-window -lsfml-graphics -lsfml-network -lsfml-audio -lpthread
+#INC=/home/owner/Documents/Development/git/SMFL/include
 
 PROTO_TARGET=cloud_speech
 PROTO_PROTOC=protoc
@@ -74,20 +74,6 @@ ifneq ($(HAS_VALID_PROTOC),true)
 	@echo "Here is what I get when trying to evaluate your version of protoc:"
 	@echo
 	-$(PROTOC) --version
-	@echo
-	@echo
-endif
-ifneq ($(HAS_PLUGIN),true)
-	@echo " DEPENDENCY ERROR"
-	@echo
-	@echo "You don't have the grpc c++ protobuf plugin installed in your path."
-	@echo "Please install grpc. You can find it here:"
-	@echo
-	@echo "   https://github.com/grpc/grpc"
-	@echo
-	@echo "Here is what I get when trying to detect if you have the plugin:"
-	@echo
-	-which $(GRPC_CPP_PLUGIN)
 	@echo
 	@echo
 endif

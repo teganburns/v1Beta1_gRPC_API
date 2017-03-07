@@ -1,42 +1,19 @@
 #include <iostream>
 #include <unistd.h>
 #include <fstream>
+#include <typeinfo>
 
 using namespace std;
 
 #include <grpc++/grpc++.h>
 #include "cloud_speech.grpc.pb.h"
 
-using google::cloud::speech::v1beta1::SyncRecognizeRequest;
-using google::cloud::speech::v1beta1::AsyncRecognizeRequest;
-using google::cloud::speech::v1beta1::AsyncRecognizeResponse;
-using google::cloud::speech::v1beta1::Operation;
-using google::cloud::speech::v1beta1::RecognitionAudio;
-using google::cloud::speech::v1beta1::RecognitionConfig;
-using google::cloud::speech::v1beta1::SpeechContext;
-using google::cloud::speech::v1beta1::SpeechRecognitionAlternative;
-using google::cloud::speech::v1beta1::SpeechRecognitionResult;
-using google::cloud::speech::v1beta1::StreamingRecognitionConfig;
-using google::cloud::speech::v1beta1::StreamingRecognitionResult;
-using google::cloud::speech::v1beta1::StreamingRecognizeRequest;
-using google::cloud::speech::v1beta1::StreamingRecognizeResponse;
-using google::cloud::speech::v1beta1::SyncRecognizeRequest;
-using google::cloud::speech::v1beta1::SyncRecognizeResponse;
+// Uncomment line below to enable debugging //
+//#define DEBUG
 
-using grpc::CompletionQueue;
-using grpc::Channel;
-using grpc::RpcService;
-using grpc::ServerCompletionQueue;
-using grpc::ServerContext;
-using google::cloud::speech::v1beta1::Speech;
+int main( int argc, char* argv[] ) {
 
-string line = "-----------------------------------------------------------------";
-string SCOPE = "speech.googleapis.com";
-
-
-int main(int argc, char* argv[])
-{
-    system("clear");
+    //system("clear");
 
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
@@ -50,26 +27,32 @@ int main(int argc, char* argv[])
     //--------------//
     /// SET UP SRR ///
     //-------------//
-    SyncRecognizeRequest sync_recognize_request;
-    RecognitionConfig config;
+    string line = "-----------------------------------------------------------------";
+    string SCOPE = "speech.googleapis.com";
 
-    sync_recognize_request.set_allocated_config(&config);
+    google::cloud::speech::v1beta1::SyncRecognizeRequest sync_recognize_request;
+    google::cloud::speech::v1beta1::RecognitionConfig config;
+    google::cloud::speech::v1beta1::RecognitionAudio audio;
+    google::cloud::speech::v1beta1::SyncRecognizeResponse response;
+    google::cloud::speech::v1beta1::SpeechRecognitionResult results;
+    google::cloud::speech::v1beta1::SpeechRecognitionAlternative alternative;
+
+    grpc::Status status;
+    grpc::ClientContext context;
 
     // CONFIG IS HERE //
-    ::google::protobuf::int32 a = 16000;
-    ::google::protobuf::int32 b = 1;
-    google::cloud::speech::v1beta1::RecognitionConfig_AudioEncoding encoding = google::cloud::speech::v1beta1::RecognitionConfig_AudioEncoding::RecognitionConfig_AudioEncoding_FLAC;
+    sync_recognize_request.set_allocated_config( &config );
+    config.set_encoding( google::cloud::speech::v1beta1::RecognitionConfig_AudioEncoding::RecognitionConfig_AudioEncoding_FLAC );
+    config.set_sample_rate( static_cast<google::protobuf::int32>( 16000 )  );
+    config.set_max_alternatives( static_cast<google::protobuf::int32>( 1 ) );
+    config.set_profanity_filter( false );
 
-    config.set_encoding(encoding);
-    config.set_sample_rate(a);
-    config.set_max_alternatives(b);
-    config.set_profanity_filter(false);
+    cout << "Encoding: " << config.encoding() << endl;
 
     // DISPLAY RESULTS FOR DEBUGGING //
-    // cout << "\n--Quick config results--" << "\nEncoding: " << config.encoding() << "\nSample Rate: " << config.sample_rate() << "\nMax Alternatives: " << config.max_alternatives() << "\nSet Profanity Filter: " << config.profanity_filter() << endl;
-
-
-
+    #ifdef DEBUG
+        cout << "\n--Quick config results--" << "\nEncoding: " << config.encoding() << "\nSample Rate: " << config.sample_rate() << "\nMax Alternatives: " << config.max_alternatives() << "\nSet Profanity Filter: " << config.profanity_filter() << endl;
+    #endif
 
     //--------------//
     /// LOAD AUDIO ///
@@ -77,14 +60,13 @@ int main(int argc, char* argv[])
 
     // LOAD AUDIO FILE DIRECTLY INTO STRING //
     ifstream infile;
-    infile.open(argv[1]);
-    string buf { istreambuf_iterator<char>(infile), istreambuf_iterator<char>() };
+    infile.open( argv[1] );
+    string buf { istreambuf_iterator<char>( infile ), istreambuf_iterator<char>() };
     infile.close();
 
     // SET AUDIO //
-    RecognitionAudio audio;
-    audio.set_content(buf);
-    sync_recognize_request.set_allocated_audio(&audio);
+    audio.set_content( buf );
+    sync_recognize_request.set_allocated_audio( &audio );
 
 
     //---------------------------------//
@@ -95,34 +77,35 @@ int main(int argc, char* argv[])
 
     // ALLOCATE MEMORY FOR RESPONSES (or something...)//
 
-    grpc::ClientContext context;
-    SyncRecognizeResponse response;
 
     // Open Channel with Google's Server //
     auto creds = grpc::GoogleDefaultCredentials();
     // Create a channel, stub and make RPC calls //
-    auto channel = grpc::CreateChannel(SCOPE, creds);
-    std::unique_ptr<Speech::Stub> stub(Speech::NewStub(channel));
-    grpc::Status s = stub->SyncRecognize(&context, sync_recognize_request, &response);
+    auto channel = grpc::CreateChannel( SCOPE, creds );
+    std::unique_ptr< google::cloud::speech::v1beta1::Speech::Stub> stub( google::cloud::speech::v1beta1::Speech::NewStub( channel ) );
+    status = stub->SyncRecognize(&context, sync_recognize_request, &response);
 
-    cout << "s.ok(): " << s.ok() << endl;
+    cout << "status.ok(): " << status.ok() << endl;
 
-    if (s.ok()) {
+    if ( status.ok() ) {
         cout << "Status returned OK\nResponse Size :" << response.results_size() << endl;
         int a = 0;
-        SpeechRecognitionResult results = response.results(0);
-        SpeechRecognitionAlternative alternative = results.alternatives(a);
+        results = response.results( 0 );
+        alternative = results.alternatives( a );
         cout << "Response :" << alternative.transcript() << endl;
-    } else if (s.ok()){
+
+    } else if ( status.ok() ){
         cout << "Status Returned Canceled" << endl;
+
     }else {
-      cout << s.error_code() << ": " << s.error_message() << s.ok() << endl;
+      cout << status.error_code() << ": " << status.error_message() << status.ok() << endl;
       cerr << "RPC failed" << endl;;
+
     }
 
     cout << "\nAll Finished!" << endl;
 
-    google::protobuf::ShutdownProtobufLibrary();
+    //google::protobuf::ShutdownProtobufLibrary();
 
     return 0;
 }
