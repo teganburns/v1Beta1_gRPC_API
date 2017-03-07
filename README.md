@@ -18,10 +18,10 @@ Pro Tip: If you are running glorious Arch Linux you can install gRPC (wich inclu
 
 ## Projects
 
-[BasicSyncRequest](/src/BasicSyncRequest/):
+[BasicSyncRequest](/BasicSyncRequest/):
 	
 
-[AudioSyncRequest](/src/AudioSyncRequest/):
+[AudioSyncRequest](/AudioSyncRequest/):
 
  This requires that you have SFML 2.4.0 installed (see http://www.sfml-dev.org/download.php for details)
 
@@ -30,7 +30,7 @@ Pro Tip: If you are running glorious Arch Linux you can install gRPC (wich inclu
 	$ sudo pacman -S sfml
 
 
-[StreamingRequest](/src/StreamingRequest/):
+[StreamingRequest](/StreamingRequest/):
 
  Working but it's not pretty...
  I have added comments to try and clarify but would suggest you get started with the Basic SyncRequest first.
