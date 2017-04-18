@@ -1,3 +1,5 @@
+**UPDATED: Cloud Speech is now generally avaiable and the docs have been updated. I'll be looking into the docs and updateing to reflect any changes to the stable version within the week-ish. [REF](https://cloudplatform.googleblog.com/2017/04/Cloud-Speech-API-is-now-generally-available.html)**
+
 # v1Beta1_gRPC_API
 
 
