@@ -1,100 +1,46 @@
-#include <bitset>
-#include <iostream>
-#include <unistd.h>
-#include <fstream>
-#include <pthread.h>
-#include <typeinfo>
-#include <thread>
+// Author: Tegan Burns
+// Website: teganburns.com
 
+#include "streaming.hpp"
 
-#include <SFML/Graphics.hpp>
-#include <SFML/Audio.hpp>
-#include <SFML/System.hpp>
+// My Recorder //
+class MyRecorder : public sf::SoundRecorder {
 
-using namespace std;
+public:
 
-#include <grpc++/grpc++.h>
-#include "cloud_speech.grpc.pb.h"
+    unsigned int sample_rate = 16000;
+    std::size_t sample_count;
+    int loop_count;
+    const int16_t* samples_;
 
+protected:
 
-using google::cloud::speech::v1beta1::SyncRecognizeRequest;
-using google::cloud::speech::v1beta1::AsyncRecognizeRequest;
-using google::cloud::speech::v1beta1::AsyncRecognizeResponse;
-using google::cloud::speech::v1beta1::Operation;
-using google::cloud::speech::v1beta1::RecognitionAudio;
-using google::cloud::speech::v1beta1::RecognitionConfig;
-using google::cloud::speech::v1beta1::SpeechContext;
-using google::cloud::speech::v1beta1::SpeechRecognitionAlternative;
-using google::cloud::speech::v1beta1::SpeechRecognitionResult;
-using google::cloud::speech::v1beta1::StreamingRecognitionConfig;
-using google::cloud::speech::v1beta1::StreamingRecognitionResult;
-using google::cloud::speech::v1beta1::StreamingRecognizeRequest;
-using google::cloud::speech::v1beta1::StreamingRecognizeResponse;
-using google::cloud::speech::v1beta1::SyncRecognizeRequest;
-using google::cloud::speech::v1beta1::SyncRecognizeResponse;
-
-using grpc::CompletionQueue;
-using grpc::Channel;
-using grpc::RpcService;
-using grpc::ServerCompletionQueue;
-using grpc::ServerContext;
-
-using grpc::ClientContext;
-using grpc::ClientReader;
-using grpc::ClientReaderWriter;
-using grpc::ClientWriter;
-using grpc::Status;
-using google::cloud::speech::v1beta1::Speech;
-
-string line = "-----------------------------------------------------------------";
-string SCOPE = "speech.googleapis.com";
-bool finished;
-
-
-class MyRecorder : public sf::SoundRecorder
-{
-    virtual bool onStart()
-    {
+    virtual bool onStart() {
         cout << "Recorder Started" << endl;
         loop_count = 0;
-        ready = false;
 
         return true;
     }
 
-    virtual bool onProcessSamples(const sf::Int16* samples, std::size_t sampleCount )
-    {
+    virtual bool onProcessSamples(const sf::Int16* samples, std::size_t sampleCount ) {
         sample_count  = sampleCount;
         samples_ = samples;
         loop_count++;
 
-        ready = true;
-        while (ready){} // poor implmentation of a loop while we wait for samples to be processed //
-
         return true;
     }
 
-    virtual void onStop()
-    {
-        ready = false;
+    virtual void onStop() {
         cout << "Recorder Stoped" << endl;
     }
 
-
-public:
-
-    int sample_rate = 16000;
-    std::size_t sample_count;
-    int loop_count;
-    const int16_t* samples_;
-    bool ready;
 
 }; // end class MyRecorder
 
 
 
-void ReadMessages(void *stream_ptr)
-{
+// Read Messages //
+void ReadMessages(void *stream_ptr) {
 
     std::shared_ptr<ClientReaderWriter<StreamingRecognizeRequest, StreamingRecognizeResponse> > *stream_holder;
     stream_holder = (std::shared_ptr<ClientReaderWriter<StreamingRecognizeRequest, StreamingRecognizeResponse> > *) stream_ptr;
@@ -116,13 +62,12 @@ void ReadMessages(void *stream_ptr)
     int previous_result_size = 0;
 
 
-    while (stream->Read(&response)){
+    while( stream->Read( &response )) {
 
         cout << "[THREAD] while_loop: " << while_loop++ << endl;
-        if (status_.ok()){
+        if( status_.ok() ) {
             cout << "\n[THREAD]status_.ok!" << endl;
             // Check Endpointer Type //
-
             if (response.endpointer_type() == ::google::cloud::speech::v1beta1::StreamingRecognizeResponse_EndpointerType_ENDPOINTER_EVENT_UNSPECIFIED){cout <<  "[THREAD]Endpointer unspecified" << endl;}
             else if (response.endpointer_type() == ::google::cloud::speech::v1beta1::StreamingRecognizeResponse_EndpointerType_START_OF_SPEECH){cout <<  "[THREAD]Endpointer START_OF_SPEECH" << endl;}
             else if (response.endpointer_type() == ::google::cloud::speech::v1beta1::StreamingRecognizeResponse_EndpointerType_END_OF_SPEECH){cout <<  "[THREAD]Endpointer END_OF_SPEECH" << endl;}
@@ -134,18 +79,18 @@ void ReadMessages(void *stream_ptr)
             cout << "[THREAD]Reponse.result_index(): " << response.result_index() << endl;
             cout << "[THREAD]Response.results_size(): " << response.results_size() << endl;
 
-            if (response.results_size() > previous_result_size )
-            {
+            if ( response.results_size() > previous_result_size ) {
 
-                response.set_result_index(previous_result_size); cout << "[THREAD]response index set" << endl;
-                StreamingRecognitionResult result_ = response.results(previous_result_size);
+                response.set_result_index( previous_result_size ); 
+                cout << "[THREAD]response index set" << endl;
+                StreamingRecognitionResult result_ = response.results( previous_result_size );
                 cout << "RESULT OK" << endl;
                 cout << "[THREAD]Result_.alternatives_size(): " << result_.alternatives_size() << endl;
                 cout << "[THREAD]Result_.stability(): " << result_.stability() << endl;
 
 
-                for (int i = 0; i < result_.alternatives_size(); i++)
-                {
+                for (int i = 0; i < result_.alternatives_size(); i++) {
+
                     SpeechRecognitionAlternative alternative_ = result_.alternatives(i);
                     cout << "\n[THREAD]alternative: " << i << endl;
                     cout << "[THREAD]alternative_.confidence: " << alternative_.confidence() << endl;
@@ -156,14 +101,9 @@ void ReadMessages(void *stream_ptr)
 
                 if (result_.is_final()){ cout << "[THREAD]Result_.is_final(): TRUE" << endl; }
                 if (!result_.is_final()){ cout << "[THREAD]Result_.is_final(): FALSE" << endl;}
-
-
             }
 
-
-
-
-        }else{
+        } else {
             cout << "\n[THREAD]Status NOT OK!! " << endl;
             cout << "[THREAD]Status Code: " << status_.error_code() << "\n[THREAD]Status Message: " << status_.error_message() << endl; break;}
 
@@ -173,10 +113,11 @@ void ReadMessages(void *stream_ptr)
 }
 
 
-// this is called when creating a new thread in main
-// it's a crude way to implment a timeout without holding up the main thread
-void timeout_method(void *timeout_ptr){
+// timeout_method
+void timeout_method( void *timeout_ptr ) {
 
+    // this is called when creating a new thread in main
+    // it's a crude way to implment a timeout without holding up the main thread
 
     bool *timeout_holder;
     timeout_holder = (bool *) timeout_ptr;
@@ -187,17 +128,17 @@ void timeout_method(void *timeout_ptr){
     cout << "TIMEOUT!!" << endl;
 
     *timeout_holder = true;
-    }
+}
 
 
-
-int main(int argc, char* argv[])
-{
+//------//
+// Main //
+//------//
+int main( int argc, char* argv[] ) {
 
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
     finished = false;
-
 
     //------------------//
     //  START  RECORDER //
@@ -207,9 +148,8 @@ int main(int argc, char* argv[])
     if (!MyRecorder::isAvailable()) {cerr << "Error: Audio Device not aviable" << endl;return -1;}
     MyRecorder recorder;
 
-    // this will print out the aviable audio devices refer to SFML's website for more information //
-
 /*
+    // this will print out the aviable audio devices refer to SFML's website for more information //
     vector<string> default_devices_ = recorder.getAvailableDevices();
     for (string e : default_devices_){
         cout << "AviableDevices: " << e << endl;
@@ -217,13 +157,13 @@ int main(int argc, char* argv[])
     cout  << "DefaultDevice: " << recorder.getDefaultDevice() << endl;
 */
 
-    // this is the card that my computer had, you will more than likely need to change this //
     const string Intel_Device = "HDA Intel PCH, 92HD91BXX Analog (CARD=PCH,DEV=0)";
-    recorder.setDevice(Intel_Device);
-    // below the sample rate is doubled b/c I had trouble getting two signed 16bit ints into one string buffer. again a crude fix... //
-    if (!recorder.start(recorder.sample_rate * 2)) {cerr << "Error starting recorder" << endl; return -1;}
+    //recorder.setDevice(Intel_Device);
 
-    cout << "SampleRate: " << recorder.getSampleRate() << "        Device: " << recorder.getDevice() << "        ChannelCount: " << recorder.getChannelCount() << endl;
+    // below the sample rate is doubled b/c I had trouble getting two signed 16bit ints into one string buffer. again a crude fix... //
+    if (!recorder.start( 16000 )) {cerr << "Error starting recorder" << endl; return -1;}
+
+    cout << "\n\n---- Recorder Settings ----" << "\nSampleRate: " << recorder.getSampleRate() << "\nDevice: " << recorder.getDevice() << "\nChannelCount: " << recorder.getChannelCount() << endl;
 
 
     //-------------//
@@ -232,30 +172,31 @@ int main(int argc, char* argv[])
     StreamingRecognizeRequest streaming_recognize_request;
     StreamingRecognitionConfig streaming_config;
     RecognitionConfig config;
-    streaming_recognize_request.set_allocated_streaming_config(&streaming_config);
-    streaming_config.set_allocated_config(&config);
+    streaming_recognize_request.set_allocated_streaming_config( &streaming_config );
+    streaming_config.set_allocated_config( &config );
 
-
+    //------------------//
     // CONFIGURE CONFIG //
-    ::google::protobuf::int32 sample_rate = recorder.sample_rate;
+    //------------------//
+    ::google::protobuf::int32 sample_rate = 16000; // recorder.sample_rate;
     ::google::protobuf::int32 max_alternatives = 5;
     google::cloud::speech::v1beta1::RecognitionConfig_AudioEncoding encoding = google::cloud::speech::v1beta1::RecognitionConfig_AudioEncoding::RecognitionConfig_AudioEncoding_LINEAR16;
 
-    config.set_encoding(encoding);
-    config.set_sample_rate(sample_rate);
-    config.set_max_alternatives(max_alternatives);
-    config.set_profanity_filter(false);
+    config.set_encoding( encoding );
+    config.set_sample_rate( sample_rate );
+    config.set_max_alternatives( max_alternatives );
+    config.set_profanity_filter( false );
 
     // DISPLAY RESULTS FOR DEBUGGING //
-    // cout << "\n--Quick config results--" << "\nEncoding: " << config.encoding() << "\nSample Rate: " << config.sample_rate() << "\nMax Alternatives: " << config.max_alternatives() << "\nSet Profanity Filter: " << config.profanity_filter() << endl;
+    cout << "\n--Quick config results--" << "\nEncoding: " << config.encoding() << "\nSample Rate: " << config.sample_rate() << "\nMax Alternatives: " << config.max_alternatives() << "\nSet Profanity Filter: " << config.profanity_filter() << endl << endl;
 
 
     // CONFIGURE STREAMING_CONFIG //
     bool single_utterance = false;
     bool interim_results = true;
 
-    streaming_config.set_single_utterance(single_utterance);
-    streaming_config.set_interim_results(interim_results);
+    streaming_config.set_single_utterance( single_utterance );
+    streaming_config.set_interim_results( interim_results );
 
 
 
@@ -298,7 +239,7 @@ int main(int argc, char* argv[])
 
     // CREATE NEW THREAD FOR READING INCOMMING MESSAGES //
     cout << "Reading Messages in new thread" << endl;
-    std::thread thread_(ReadMessages, &stream);
+    std::thread thread_( ReadMessages, &stream );
 
 
     // SOME VARS FOR WHILE LOOP //
@@ -306,61 +247,64 @@ int main(int argc, char* argv[])
     string audio_content;
     int cnt = 0;
     bool timeout = false;
-    std::thread timeout_thread_(timeout_method, &timeout);
+    std::thread timeout_thread_( timeout_method, &timeout );
     //cout << "Timeout address: " << &timeout << "    Timeout state: " << timeout <<  endl;
 
-    streaming_recognize_request.set_allocated_audio_content(&audio_content);
+    streaming_recognize_request.set_allocated_audio_content( &audio_content );
 
-
-    cout << "Entering While loop" << endl;
 
     // SAVE AUDIO STREAM FOR REFRENCE INCASE THERE ARE ERRORS //
-    //ofstream outfile;
-    //outfile.open("file.dat", ios::out);
+    fstream file;
+    file.open( "file.dat", ios::out );
+    cout << "Entering While loop" << endl;
 
+    while( !finished && !timeout ) {
 
-    while (!finished && !timeout)
-    {
-
-        while (!recorder.ready && !timeout) {  }
-        if (timeout){break;}
-        //cout << "cnt: " << cnt++ << endl;
+        //if ( timeout ){ break; }
 
         // PUT ALL THE AVIABLE SAMPLES IN A BUFFER
-        for (unsigned long i=0; i<=recorder.sample_count; i++)
-        {
-            audio_content += recorder.samples_[i];
+        if ( cnt < recorder.loop_count ){
+            cnt++;
+            //cout << "Loop count: " << cnt << "    Recorder count: " << recorder.loop_count << endl;
+            //cout <<  "Single sample: " << recorder.samples_[0] << endl; 
+            for( unsigned long i=0; i <= recorder.sample_count; i++ ) {
+                audio_content += recorder.samples_[i];
+                //file << recorder.samples_[i];
+            }
+           
+            file << audio_content; 
+            //file << "Size: " << sizeof(recorder.samples_[0]) << "\nSample Count: " << recorder.sample_count << "\nSingle sample: " << recorder.samples_[0] << endl;
+            //------------------------------------//
+            //  SEND STREAMING RECOGNIZE REQUEST  //
+            //------------------------------------//
+            if( !stream->Write( streaming_recognize_request )) { cout << "broken stream" << endl; break; }
+            else { audio_content = ""; }
+
         }
-
-        //cout << sizeof(audio_content) << endl;
-        //outfile << audio_content;
-
-
-        //------------------------------------//
-        //  SEND STREAMING RECOGNIZE REQUEST  //
-        //------------------------------------//
-        if (!stream->Write(streaming_recognize_request)) {cout << "broken stream" << endl;break; }
-        else{ recorder.ready = false; audio_content = "";};
 
     }
 
     //----------------------------------------------------------------------//
     // FINISH STREAM, JOIN THREAD, STOP RECORDER, AND GET FINAL STATUS CODE //
     //----------------------------------------------------------------------//
-
-    recorder.ready = false; // SET TO FALSE SO THE RECORDER DOESNT HANG //
+    cout << "\n\n--------Cleaning up---------" << endl;
     cout << "Out of while loop!" << endl;
 
-    //outfile.close();
+    file.close();
 
-    cout << "stream->WritesDone" << endl;
+    cout << "stream->WritesDone...";
     if (!stream->WritesDone()) {cout << "Writes unsucessful" << endl;}
+    cout << "Done! "<< endl;
+
+    cout << "Stopping Recorder...";
+    recorder.stop();
+    cout << "Done! "<< endl;
+
+    cout << "Thread joinable?" << thread_.joinable() << endl;
+    
 
     cout << "Joining Thread"  << endl;
     thread_.join();
-
-    cout << "Stopping Recorder" << endl;
-    if (recorder.ready){ recorder.ready = false; recorder.stop(); }
 
     cout << "Getting status" << endl;
     Status status = stream->Finish();

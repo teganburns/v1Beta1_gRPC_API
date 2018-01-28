@@ -1,0 +1,61 @@
+// Author: Tegan Burns
+// Website: teganburns.com
+
+#include <bitset>
+#include <iostream>
+#include <unistd.h>
+#include <fstream>
+#include <pthread.h>
+#include <typeinfo>
+#include <thread>
+
+
+#include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
+#include <SFML/System.hpp>
+
+using namespace std;
+
+#include <grpc++/grpc++.h>
+#include "streaming.grpc.pb.h"
+
+
+using google::cloud::speech::v1beta1::SyncRecognizeRequest;
+using google::cloud::speech::v1beta1::AsyncRecognizeRequest;
+using google::cloud::speech::v1beta1::AsyncRecognizeResponse;
+using google::cloud::speech::v1beta1::Operation;
+using google::cloud::speech::v1beta1::RecognitionAudio;
+using google::cloud::speech::v1beta1::RecognitionConfig;
+using google::cloud::speech::v1beta1::SpeechContext;
+using google::cloud::speech::v1beta1::SpeechRecognitionAlternative;
+using google::cloud::speech::v1beta1::SpeechRecognitionResult;
+using google::cloud::speech::v1beta1::StreamingRecognitionConfig;
+using google::cloud::speech::v1beta1::StreamingRecognitionResult;
+using google::cloud::speech::v1beta1::StreamingRecognizeRequest;
+using google::cloud::speech::v1beta1::StreamingRecognizeResponse;
+using google::cloud::speech::v1beta1::SyncRecognizeRequest;
+using google::cloud::speech::v1beta1::SyncRecognizeResponse;
+
+using grpc::CompletionQueue;
+using grpc::Channel;
+//using grpc::RpcService;
+using grpc::ServerCompletionQueue;
+using grpc::ServerContext;
+
+using grpc::ClientContext;
+using grpc::ClientReader;
+using grpc::ClientReaderWriter;
+using grpc::ClientWriter;
+using grpc::Status;
+using google::cloud::speech::v1beta1::Speech;
+
+string line = "-----------------------------------------------------------------";
+string SCOPE = "speech.googleapis.com";
+bool finished;
+
+
+
+void ReadMessages(void *stream_ptr);
+void timeout_method( void *timeout_ptr );
+
+
