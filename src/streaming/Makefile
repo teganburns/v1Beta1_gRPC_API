@@ -7,12 +7,12 @@ LDFLAGS += -L/usr/local/lib `pkg-config --libs grpc++`            \
 LIBS=-lsfml-system -lsfml-window -lsfml-graphics -lsfml-network -lsfml-audio -lpthread
 INC=-I /home/owner/Documents/Development/git/SMFL/include -I /usr/include -I /usr/local/include
 
-PROTO_TARGET=cloud_speech
+PROTO_TARGET=streaming
 PROTO_PROTOC=protoc
 PROTO_PATH=.
 PROTO_PROTO=proto
 
-CPP_TARGET=main
+CPP_TARGET=streaming
 
 GRPC_CPP_PLUGIN = grpc_cpp_plugin
 GRPC_CPP_PLUGIN_PATH ?= `which $(GRPC_CPP_PLUGIN)`
@@ -23,18 +23,18 @@ PROTOS_PATH = .
 vpath %.proto $(PROTOS_PATH)
 
 
-all: system-check main_cpp
+all: system-check streaming_cpp
 
-main_cpp: cloud_speech.pb.o cloud_speech.grpc.pb.o  main.o
+streaming_cpp: streaming.pb.o streaming.grpc.pb.o  streaming.o
 	$(CXX) $(CXXFLAGS) $(INC) $^ $(LDFLAGS) $(LIBS) -o $@
 
 .PRECIOUS: %.grpc.pb.cc
 %.grpc.pb.cc: %.proto
-	$(PROTO_PROTOC) -I $(PROTOS_PATH) --grpc_out=. --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH) cloud_speech.proto
+	$(PROTO_PROTOC) -I $(PROTOS_PATH) --grpc_out=. --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH) $(PROTO_TARGET).proto
 
 .PRECIOUS: %.pb.cc
 %.pb.cc: %.proto
-	$(PROTO_PROTOC) -I $(PROTOS_PATH) --cpp_out=. cloud_speech.proto
+	$(PROTO_PROTOC) -I $(PROTOS_PATH) --cpp_out=. $(PROTO_TARGET).proto
 
 clean:
 	$(RM) $(CPP_TARGET)_cpp *.o *.pb.cc *.pb.h

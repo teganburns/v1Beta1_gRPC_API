@@ -71,50 +71,58 @@ find_package(SFML 2 REQUIRED COMPONENTS network audio graphics window system)
 # protoc -I ../src/streaming/ --grpc_out=. --plugin=protoc-gen-grpc=grpc/build/grpc_cpp_plugin ../src/streaming/streaming.proto
 # protoc -I ../src/streaming/ --cpp_out=. ../src/streaming/streaming.proto
 
+
+
 set(STREAMING_PROTO "${proto_include_dir}/streaming.proto")
 set(GENERATED_PROTOBUF_PATH "${CMAKE_BINARY_DIR}")
-#file(MAKE_DIRECTORY ${GENERATED_PROTOBUF_PATH})
-set(STREAMING_PB_CPP_FILE "${GENERATED_PROTOBUF_PATH}/streaming.pb.cc")
-set(STREAMING_PB_H_FILE "${GENERATED_PROTOBUF_PATH}/streaming.pb.h")
-set(STREAMING_GRPC_PB_CPP_FILE "${GENERATED_PROTOBUF_PATH}/streaming.grpc.pb.cc")
-set(STREAMING_GRPC_PB_H_FILE "${GENERATED_PROTOBUF_PATH}/streaming.grpc.pb.h")
+set( STREAMING_PB_LIB "${GENERATED_PROTOBUF_PATH}/streaming.pb.o" )
+set( STREAMING_GRPC_PB_LIB "${GENERATED_PROTOBUF_PATH}/streaming.grpc.pb.o" )
 
-message( STATUS "STREAMING_PB_CPP_FILE: ${STREAMING_PB_CPP_FILE}" )
-message( STATUS "STREAMING_PB_H_FILE: ${STREAMING_PB_H_FILE}" )
-message( STATUS "STREAMING_GRPC_PB_CPP_FILE: ${STREAMING_GRPC_PB_CPP_FILE}" )
-message( STATUS "STREAMING_GRPC_PB_H_FILE: ${STREAMING_GRPC_PB_H_FILE}" )
+#file(MAKE_DIRECTORY ${GENERATED_PROTOBUF_PATH})
+set(STREAMING_PB_CPP "${GENERATED_PROTOBUF_PATH}/streaming.pb.cc")
+set(STREAMING_PB_H "${GENERATED_PROTOBUF_PATH}/streaming.pb.h")
+set(STREAMING_GRPC_PB_CPP "${GENERATED_PROTOBUF_PATH}/streaming.grpc.pb.cc")
+set(STREAMING_GRPC_PB_H "${GENERATED_PROTOBUF_PATH}/streaming.grpc.pb.h")
+
+add_custom_command( 
+    COMMENT "Building ${STREAMING_PB_H}" "${STREAMING_PB_CPP}"
+    OUTPUT "${STREAMING_PB_H}" "${STREAMING_PB_CPP}"
+    COMMAND "${PROJECT_BINARY_DIR}/grpc/build/third_party/protobuf/protoc"
+    ARGS "-I ../src/streaming/ -I ./ --cpp_out=. ../src/streaming/streaming.proto"
+)
 
 add_custom_command(
-    OUTPUT "${STREAMING_PB_H_FILE}"
-        "${STREAMING_PB_CPP_FILE}"
-        "${STREAMING_GRPC_PB_H_FILE}"
-        "${STREAMING_GRPC_PB_CPP_FILE}"
+    COMMENT "Building ${STREAMING_GRPC_PB_H}" "${STREAMING_GRPC_PB_CPP}"
+    OUTPUT "${STREAMING_GRPC_PB_H}" "${STREAMING_GRPC_PB_CPP}"
     COMMAND "${PROJECT_BINARY_DIR}/grpc/build/third_party/protobuf/protoc"
-    ARGS "-I ../src/streaming/ --cpp_out=. ../src/streaming/streaming.proto"
-    COMMAND "${PROJECT_BINARY_DIR}/grpc/build/third_party/protobuf/protoc"
-    ARGS "-I ../src/streaming/ --grpc_out=. --plugin=protoc-gen-grpc=grpc/build/grpc_cpp_plugin ../src/streaming/streaming.proto"
+    ARGS "-I ../src/streaming/ -I ./ --grpc_out=. --plugin=protoc-gen-grpc=grpc/build/grpc_cpp_plugin ../src/streaming/streaming.proto"
 )
+
+
+message( STATUS "STREAMING_PB_CPP: ${STREAMING_PB_CPP}" )
+message( STATUS "STREAMING_PB_H: ${STREAMING_PB_H}" )
+message( STATUS "STREAMING_GRPC_PB_CPP: ${STREAMING_GRPC_PB_CPP}" )
+message( STATUS "STREAMING_GRPC_PB_H: ${STREAMING_GRPC_PB_H}" )
+message( STATUS "GENERATED_PROTOBUF_FILES: ${GENERATED_PROTOBUF_FILES}" )
 
 set( GENERATED_PROTOBUF_FILES ${STREAMING_PB_H_FILE} ${STREAMING_PB_CPP_FILE} ${STREAMING_GRPC_PB_H_FILE} ${STREAMING_GRPC_PB_CPP_FILE} )
 
 
 #include(ExternalProject)
 #
-#set(EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/external)
+#set(EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/grpc_external)
 #
 #ExternalProject_Add(googletest
-#    GIT_REPOSITORY https://github.com/google/googletest
+#    GIT_REPOSITORY https://github.com/grpc/grpc
 #    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_LOCATION}
 #)
 #
 #include_directories(${EXTERNAL_INSTALL_LOCATION}/include)
 #link_directories(${EXTERNAL_INSTALL_LOCATION}/lib)
-#
+
 #add_executable(FirstTest ${streaming_cpp})
 #add_dependencies(FirstTest googletest)
 #target_link_libraries(FirstTest gtest gtest_main pthread)
-
-
 
 
 include_directories( ${GENERATED_PROTOBUF_PATH} )
@@ -124,24 +132,21 @@ include_directories( ${GENERATED_PROTOBUF_PATH} )
 configure_file ( "${STREAMING_SRC_DIR}/streaming.hpp.in" ${STREAMING_HPP} )
 
 include_directories (
-    ${STREAMING_SRC_DIR}
-    ${STREAMING_BIN_DIR}
     ${PROJECT_BINARY_DIR}
+	${PROJECT_BINARY_DIR}/grpc_external/include
     ${EXTERNAL_INSTALL_LOCATION}/include
-	${PROJECT_BINARY_DIR}/grpc/build/include
-	${PROJECT_BINARY_DIR}grpc/build/include
 )
 
 link_directories (
+    ${PROJECT_BINARY_DIR}
+	${PROJECT_BINARY_DIR}/grpc_external/lib
     ${EXTERNAL_INSTALL_LOCATION}/lib
-	${PROJECT_BINARY_DIR}/grpc/build/lib
-	${PROJECT_BINARY_DIR}grpc/build/lib
 )
 
-#add_executable( streaming.pb.o streaming.pb.cc streaming.pb.h )
-#add_executable( streaming.grpc.pb.o streaming.grpc.pb.cc streaming.grpc.pb.h )
-add_executable( ${EXECUTABLE_NAME} ${STREAMING_CPP} ${STREAMING_HPP} ${PROTO_SRC} ${PROTO_HDRS} ${GENERATED_PROTOBUF_PATH} )
-target_link_libraries ( ${EXECUTABLE_NAME}  ${PROTOBUF_LIBRARIES} )
+add_library( ${STREAMING_PB_LIB} ${STREAMING_PB_CPP} ${STREAMING_PB_H} ${PROTO_HDRS} )
+add_library( ${STREAMING_GRPC_PB_LIB} ${STREAMING_GRPC_PB_CPP} ${STREAMING_GRPC_PB_H} ${PROTO_HDRS} )
+add_executable( ${EXECUTABLE_NAME} ${STREAMING_CPP} ${STREAMING_HPP} ${PROTO_SRC} ${PROTO_HDRS} ${STREAMING_PB_H_FILE} ${STREAMING_GRPC_PB_H_FILE} )
+target_link_libraries ( ${EXECUTABLE_NAME}  ${PROTOBUF_LIBRARIES} "streaming.pb.o" "streaming.grpc.pb.o" )
 
 
 if(SFML_FOUND)
