@@ -65,6 +65,22 @@ message( STATUS "PROTO_HDRS: ${PROTO_HDRS}")
 
 find_package(SFML 2 REQUIRED COMPONENTS network audio graphics window system)
 
+# get gRPC
+include(ExternalProject)
+
+set(EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/grpc_external)
+
+ExternalProject_Add(grpc
+    GIT_REPOSITORY https://github.com/grpc/grpc
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_LOCATION}
+)
+
+include_directories(${EXTERNAL_INSTALL_LOCATION}/include)
+link_directories(${EXTERNAL_INSTALL_LOCATION}/lib)
+
+set( GRPC grpc )
+#add_dependencies( ${EXECUTABLE_NAME} ${GRPC} )
+
 
 # gRPC
 # protoc -I ../src/streaming/ --grpc_out=. --plugin=protoc-gen-grpc=$( which grpc_cpp_plugin ) ../src/streaming/streaming.proto
@@ -108,22 +124,6 @@ message( STATUS "GENERATED_PROTOBUF_FILES: ${GENERATED_PROTOBUF_FILES}" )
 set( GENERATED_PROTOBUF_FILES ${STREAMING_PB_H_FILE} ${STREAMING_PB_CPP_FILE} ${STREAMING_GRPC_PB_H_FILE} ${STREAMING_GRPC_PB_CPP_FILE} )
 
 
-#include(ExternalProject)
-#
-#set(EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/grpc_external)
-#
-#ExternalProject_Add(googletest
-#    GIT_REPOSITORY https://github.com/grpc/grpc
-#    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_LOCATION}
-#)
-#
-#include_directories(${EXTERNAL_INSTALL_LOCATION}/include)
-#link_directories(${EXTERNAL_INSTALL_LOCATION}/lib)
-
-#add_executable(FirstTest ${streaming_cpp})
-#add_dependencies(FirstTest googletest)
-#target_link_libraries(FirstTest gtest gtest_main pthread)
-
 
 include_directories( ${GENERATED_PROTOBUF_PATH} )
 #link_libraries(grpc++_unsecure grpc gpr ${PROTOBUF_LIBRARY})
@@ -143,10 +143,10 @@ link_directories (
     ${EXTERNAL_INSTALL_LOCATION}/lib
 )
 
-add_library( ${STREAMING_PB_LIB} ${STREAMING_PB_CPP} ${STREAMING_PB_H} ${PROTO_HDRS} )
-add_library( ${STREAMING_GRPC_PB_LIB} ${STREAMING_GRPC_PB_CPP} ${STREAMING_GRPC_PB_H} ${PROTO_HDRS} )
+#add_library( ${STREAMING_PB_LIB} ${STREAMING_PB_CPP} ${STREAMING_PB_H} ${PROTO_HDRS} )
+#add_library( ${STREAMING_GRPC_PB_LIB} ${STREAMING_GRPC_PB_CPP} ${STREAMING_GRPC_PB_H} ${PROTO_HDRS} )
 add_executable( ${EXECUTABLE_NAME} ${STREAMING_CPP} ${STREAMING_HPP} ${PROTO_SRC} ${PROTO_HDRS} ${STREAMING_PB_H_FILE} ${STREAMING_GRPC_PB_H_FILE} )
-target_link_libraries ( ${EXECUTABLE_NAME}  ${PROTOBUF_LIBRARIES} "streaming.pb.o" "streaming.grpc.pb.o" )
+target_link_libraries ( ${EXECUTABLE_NAME}  ${PROTOBUF_LIBRARIES} ${STREAMING_PB_LIB} ${STREAMING_GRPC_PB_LIB} )
 
 
 if(SFML_FOUND)
