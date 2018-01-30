@@ -1,7 +1,7 @@
 # Author: Tegan Burns
 # Website: teganburns.com
 
-cmake_minimum_required ( VERSION 3.8.2 )
+cmake_minimum_required ( VERSION 3.10.2 )
 
 # Use either one for DEBUGGING
 #set(CMAKE_BUILD_TYPE Debug)
@@ -69,9 +69,11 @@ find_package(SFML 2 REQUIRED COMPONENTS network audio graphics window system)
 include(ExternalProject)
 
 set(EXTERNAL_INSTALL_LOCATION ${CMAKE_BINARY_DIR}/grpc_external)
+set ( GRPC_VERSION v1.8.x )
 
 ExternalProject_Add(grpc
     GIT_REPOSITORY https://github.com/grpc/grpc
+	GIT_TAG ${GRPC_VERSION}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${EXTERNAL_INSTALL_LOCATION}
 )
 
